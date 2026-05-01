@@ -14,143 +14,170 @@ import {
   CFormLabel
 } from "@coreui/react";
 
-
 import { BULAN_LIST } from "../../../../../utils/bulan";
 
 const CetakModal = ({
   visible,
   onClose,
-  data = [],
+  modeCetak, // Mode dari parent (tpptotal, harian, bulanan, rekappersen)
   penandaList = [],
   onSubmit,
+  selectedOpd,
+
 }) => {
-
   // ================= STATE =================
-  const [pegawai, setPegawai] = useState("");
-  const [nip, setNip] = useState("");
-
   const [selectedBulan, setSelectedBulan] = useState("");
   const [selectedTahun, setSelectedTahun] = useState(new Date().getFullYear());
+  
+  // State untuk 1 penandatangan (Mode Biasa)
   const [selectedPenanda, setSelectedPenanda] = useState(null);
 
-  const [listPegawai, setListPegawai] = useState([]);
+  // State untuk 3 penandatangan (Khusus mode tpptotal)
+  const [penandaKiri, setPenandaKiri] = useState(null);
+  const [penandaTengah, setPenandaTengah] = useState(null);
+  const [penandaKanan, setPenandaKanan] = useState(null);
 
-  // ✅ ERROR STATE (LOCAL ONLY)
   const [errorMessage, setErrorMessage] = useState("");
 
   // ================= AUTO HIDE ERROR =================
   useEffect(() => {
     if (!errorMessage) return;
-
-    const timer = setTimeout(() => {
-      setErrorMessage("");
-    }, 2500);
-
+    const timer = setTimeout(() => setErrorMessage(""), 3000);
     return () => clearTimeout(timer);
   }, [errorMessage]);
-
-  // ================= LIST PEGAWAI =================
-  useEffect(() => {
-    if (!Array.isArray(data) || data.length === 0) {
-      setListPegawai([]);
-      return;
-    }
-
-    const unique = {};
-
-    data.forEach((d) => {
-      if (d?.nama && !unique[d.nama]) {
-        unique[d.nama] = d.nip;
-      }
-    });
-
-    setListPegawai(
-      Object.keys(unique).map((n) => ({
-        nama: n,
-        nip: unique[n],
-      }))
-    );
-  }, [data]);
-
-  // ================= AUTO NIP =================
-  useEffect(() => {
-    const found = listPegawai.find((p) => p.nama === pegawai);
-    setNip(found?.nip || "");
-  }, [pegawai, listPegawai]);
 
   // ================= RESET SAAT MODAL DIBUKA =================
   useEffect(() => {
     if (visible) {
-      setPegawai("");
-      setNip("");
       setSelectedBulan("");
       setSelectedTahun(new Date().getFullYear());
       setSelectedPenanda(null);
+      setPenandaKiri(null);
+      setPenandaTengah(null);
+      setPenandaKanan(null);
       setErrorMessage("");
     }
   }, [visible]);
 
+    useEffect(() => {
+    setSelectedPenanda(null);
+    setPenandaKiri(null);
+    setPenandaTengah(null);
+    setPenandaKanan(null);
+  }, [selectedOpd]);
+
   // ================= VALIDASI & SUBMIT =================
   const handleSubmit = async () => {
-  if (!selectedBulan || !selectedTahun) {
-    setErrorMessage("Bulan dan tahun wajib dipilih");
-    return;
-  }
+    if (!selectedBulan || !selectedTahun) {
+      setErrorMessage("Bulan dan tahun wajib dipilih");
+      return;
+    }
 
-  if (!selectedPenanda) {
-    setErrorMessage("Penandatangan wajib dipilih");
-    return;
-  }
+    let payloadPenandatangan;
 
-  setErrorMessage("");
+    if (modeCetak === "tpptotal") {
+      // Validasi 3 penandatangan
+      if (!penandaKiri || !penandaTengah || !penandaKanan) {
+        setErrorMessage("Ketiga penandatangan wajib dipilih untuk mode TPP");
+        return;
+      }
+      payloadPenandatangan = {
+        kiri: penandaKiri,
+        tengah: penandaTengah,
+        kanan: penandaKanan
+      };
+    } else {
+      // Validasi 1 penandatangan
+      if (!selectedPenanda) {
+        setErrorMessage("Penandatangan wajib dipilih");
+        return;
+      }
+      payloadPenandatangan = selectedPenanda;
+    }
 
-  const result = await onSubmit({
-    bulan: selectedBulan,
-    tahun: selectedTahun,
-    pegawai,
-    nip,
-    penandatangan: selectedPenanda
-  });
+    setErrorMessage("");
 
-  if (result?.error) {
-    setErrorMessage(result.error);
-    return;
-  }
+    const result = await onSubmit({
+      bulan: selectedBulan,
+      tahun: selectedTahun,
+      penandatangan: payloadPenandatangan
+    });
 
-  if (result?.info) {
-    setErrorMessage(result.info);
-    return;
-  }
-
-  if (result?.success) {
-    setErrorMessage("Laporan berhasil digenerate");
-
-    setTimeout(() => {
-      setErrorMessage("");
-      onClose();
-    }, 1500);
-  }
+    if (result?.error) setErrorMessage(result.error);
+    if (result?.info) setErrorMessage(result.info);
+    
+    if (result?.success) {
+      setErrorMessage("Laporan berhasil digenerate");
+      setTimeout(() => {
+        setErrorMessage("");
+        onClose();
+      }, 1500);
+    }
   };
 
+  // Reusable Select Component untuk kerapian
+  const PenandaSelectField = ({ label, value, onChange }) => (
+  <CCol md={12} className="mb-2">
+    <CFormLabel>{label}</CFormLabel>
+
+    <CFormSelect
+      key={penandaList.length} // 🔥 PENTING: paksa re-render saat data berubah
+      value={value?.id ?? ""}
+      onChange={(e) => {
+        const val = e.target.value;
+
+        const found = penandaList.find((p) => String(p.id) === String(val));
+
+        onChange(found || null);
+      }}
+    >
+      <option value="">Pilih {label}</option>
+
+      {penandaList.length === 0 ? (
+        <option disabled>Loading / Tidak ada data</option>
+      ) : (
+        penandaList.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.nama} - {p.jabatan_nama || p.jabatan || "-"}
+          </option>
+        ))
+      )}
+    </CFormSelect>
+
+    {/* DEBUG VISUAL */}
+    <div style={{ fontSize: "10px", color: "#999" }}>
+      total: {penandaList.length}
+    </div>
+
+    {value && (
+      <div className="mt-1" style={{ fontSize: "11px", color: "#666" }}>
+        <div>
+          <strong>Jabatan:</strong>{" "}
+          {value?.jabatan_nama || value?.jabatan || "-"}
+        </div>
+        <div>
+          <strong>NIP:</strong> {value?.nip || "-"}
+        </div>
+      </div>
+    )}
+  </CCol>
+);
+
   return (
-    <CModal visible={visible} onClose={onClose}>
+    <CModal visible={visible} onClose={onClose} size={modeCetak === "tpptotal" ? "lg" : undefined}>
       <CModalHeader>
-        <CModalTitle>Filter Cetak Laporan</CModalTitle>
+        <CModalTitle>Filter Cetak - {modeCetak?.toUpperCase()}</CModalTitle>
       </CModalHeader>
 
       <CModalBody>
-
-        {/* ✅ ALERT AUTO HIDE */}
         {errorMessage && (
-          <CAlert color="danger">
+          <CAlert color={errorMessage.includes("berhasil") ? "success" : "danger"}>
             {errorMessage}
           </CAlert>
         )}
 
-        <CRow className="g-4">
-
-          {/* BULAN */}
-          <CCol md={12}>
+        <CRow className="g-3">
+          <CCol md={6}>
             <CFormLabel>Bulan</CFormLabel>
             <CFormSelect
               value={selectedBulan}
@@ -158,15 +185,12 @@ const CetakModal = ({
             >
               <option value="">Pilih Bulan</option>
               {BULAN_LIST.map((b) => (
-                <option key={b.value} value={b.value}>
-                  {b.label}
-                </option>
+                <option key={b.value} value={b.value}>{b.label}</option>
               ))}
             </CFormSelect>
           </CCol>
 
-          {/* TAHUN */}
-          <CCol md={12}>
+          <CCol md={6}>
             <CFormLabel>Tahun</CFormLabel>
             <CFormInput
               type="number"
@@ -175,52 +199,25 @@ const CetakModal = ({
             />
           </CCol>
 
-          {/* PENANDATANGAN */}
-          <CCol md={12}>
-            <CFormLabel>Penandatangan</CFormLabel>
-            <CFormSelect
-              value={selectedPenanda?.id || ""}
-              onChange={(e) => {
-                const found = penandaList.find(
-                  (p) => p.id == e.target.value
-                );
-                setSelectedPenanda(found || null);
-              }}
-            >
-              <option value="">
-                {penandaList.length
-                  ? "Pilih Penandatangan"
-                  : "Data penandatangan kosong"}
-              </option>
+          <hr className="my-4" />
 
-              {penandaList.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nama}
-                </option>
-              ))}
-            </CFormSelect>
-          </CCol>
-
-          {/* NIP */}
-          <CCol md={12}>
-            <CFormLabel>NIP</CFormLabel>
-            <CFormInput
-              value={selectedPenanda?.nip || ""}
-              disabled
-              placeholder="NIP otomatis muncul"
-            />
-          </CCol>
-
+          {/* MODE KONDISIONAL PENANDATANGAN */}
+          {modeCetak === "tpptotal" ? (
+            <>
+              <CCol md={12}><h6 className="fw-bold">Pengaturan Penandatangan (3 Orang)</h6></CCol>
+              <PenandaSelectField label="Disetujui Oleh" value={penandaKiri} onChange={setPenandaKiri} />
+              <PenandaSelectField label="Mengetahui PPTK" value={penandaTengah} onChange={setPenandaTengah} />
+              <PenandaSelectField label="Dibayar Oleh" value={penandaKanan} onChange={setPenandaKanan} />
+            </>
+          ) : (
+            <PenandaSelectField label="Penandatangan Laporan" value={selectedPenanda} onChange={setSelectedPenanda} />
+          )}
         </CRow>
       </CModalBody>
 
       <CModalFooter>
-        <CButton color="secondary" onClick={onClose}>
-          Batal
-        </CButton>
-        <CButton color="primary" onClick={handleSubmit}>
-          Cetak Laporan
-        </CButton>
+        <CButton color="secondary" onClick={onClose}>Batal</CButton>
+        <CButton color="primary" onClick={handleSubmit}>Cetak Laporan</CButton>
       </CModalFooter>
     </CModal>
   );

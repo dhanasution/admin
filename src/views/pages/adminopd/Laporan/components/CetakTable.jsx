@@ -142,7 +142,7 @@ const CetakTable = ({ onCetak }) => {
                 onCetak(
                   null,
                   "DAFTAR TAMBAHAN PENGHASILAN PEGAWAI ASN",
-                  "tpptotap",
+                  "tpptotal",
                   "PNS"
                 )
               }

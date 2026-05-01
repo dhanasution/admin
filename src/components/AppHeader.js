@@ -10,6 +10,7 @@ import {
   CHeaderNav,
   CHeaderToggler,
   useColorModes,
+
 } from '@coreui/react'
 
 import CIcon from '@coreui/icons-react'
@@ -21,7 +22,10 @@ import {
 } from '@coreui/icons'
 
 import { AppHeaderDropdown } from './header/index'
-import { getProfile } from '../services/authService' // ✅ pakai service
+import { getProfile } from '../services/authService' 
+
+
+
 
 const AppHeader = () => {
   const headerRef = useRef()
@@ -31,6 +35,8 @@ const AppHeader = () => {
   const sidebarShow = useSelector((state) => state.sidebarShow)
 
   const [user, setUser] = useState(null)
+
+
 
   // ================================
   // 👤 FETCH USER (GLOBAL API)
@@ -49,6 +55,8 @@ const AppHeader = () => {
 
     fetchUser()
   }, [])
+
+
 
   // ================================
   // 🎨 SHADOW HEADER
@@ -82,6 +90,7 @@ const AppHeader = () => {
     return "Selamat Malam"
   }
 
+
   return (
     <CHeader position="sticky" className="mb-4 p-0" ref={headerRef}>
       <CContainer className="border-bottom px-4 d-flex align-items-center" fluid>
@@ -108,6 +117,7 @@ const AppHeader = () => {
 
         {/* RIGHT SIDE */}
         <CHeaderNav className="ms-auto">
+
 
           {/* THEME SWITCHER */}
           <CDropdown variant="nav-item" placement="bottom-end">

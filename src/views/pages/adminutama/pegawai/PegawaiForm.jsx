@@ -151,9 +151,9 @@ export default function PegawaiForm({ data, onClose, onSuccess }) {
               <CFormInput label="Nama" value={form.nama} disabled />
             </CCol>
 
-            {/* UNIT */}
+            {/* UNOR */}
             <CCol md={6}>
-              <CFormInput label="Unit" value={form.unor} disabled />
+              <CFormInput label="Unor" value={form.unor} disabled />
             </CCol>
 
             {/* JABATAN */}

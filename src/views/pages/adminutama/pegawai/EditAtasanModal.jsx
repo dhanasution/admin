@@ -89,10 +89,19 @@ export default function EditAtasanModal({ data, onClose, onSuccess }) {
   }, [unitList, searchUnit]);
 
   // ================= FILTER ATASAN (HANYA PNS) =================
+
   const filteredAtasanList = useMemo(() => {
     return atasanList
       .filter((a) => a.user_id !== data?.user_id)
-      .filter((a) => a.kategori_pegawai === "PNS");
+      .filter((a) => {
+        const nama = (a.nama || "").toUpperCase();
+
+        return (
+          a.kategori_pegawai === "PNS" ||
+          nama.includes("WALIKOTA") ||
+          nama.includes("WAKIL WALIKOTA")
+        );
+      });
   }, [atasanList, data]);
 
   // ================= CURRENT ATASAN =================

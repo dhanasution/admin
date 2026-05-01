@@ -6,6 +6,7 @@ import {
   cilUser,
   cilPeople,
   cilNotes,
+  cilClipboard,
 } from '@coreui/icons'
 
 import { CNavItem, CNavTitle } from '@coreui/react'
@@ -43,6 +44,24 @@ const navAdminUtama = [
     to: '/adminutama/aktivitas',
     icon: <CIcon icon={cilNotes} className="nav-icon" />,
   },
+
+  // ======================
+  // TAMBAHAN BARU
+  // ======================
+  {
+    component: CNavItem,
+    name: 'Riwayat Absensi',
+    to: '/adminutama/riwayat-absensi',
+    icon: <CIcon icon={cilClipboard} className="nav-icon" />,
+  },
+
+  {
+    component: CNavItem,
+    name: 'Cetak Laporan',
+    to: '/adminutama/laporan',
+    icon: <CIcon icon={cilClipboard} className="nav-icon" />,
+  },
+
 ]
 
 export default navAdminUtama

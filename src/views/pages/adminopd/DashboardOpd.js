@@ -1,30 +1,41 @@
 import React from "react"
-import { CCard, CCardBody, CCardTitle, CRow, CCol } from "@coreui/react"
+import {
+  CCard,
+  CCardBody,
+  CRow,
+  CCol,
+  CContainer,
+} from "@coreui/react"
 
 const DashboardOpd = () => {
+
+  const cardStyle = {
+    border: "none",
+    borderRadius: "16px",
+    boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+  }
+
   return (
-    <div>
-      <h4 className="mb-3">Dashboard Admin OPD</h4>
+    <div style={{ width: "100%" }}>
+      <CContainer fluid className="px-4">
 
-      <CRow>
-        <CCol md={6}>
-          <CCard>
-            <CCardBody>
-              <CCardTitle>HALAMAN ADMIN OPD</CCardTitle>
-              <h3>30</h3>
-            </CCardBody>
-          </CCard>
-        </CCol>
+        {/* HEADER */}
+        <CRow className="mb-4">
+          <CCol xs={12}>
+            <CCard style={cardStyle}>
+              <CCardBody>
+                <h3 className="fw-bold mb-1">
+                  Dashboard Admin OPD
+                </h3>
+                <small className="text-medium-emphasis">
+                  Monitoring Kehadiran & Aktivitas Pegawai
+                </small>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
 
-        <CCol md={6}>
-          <CCard>
-            <CCardBody>
-              <CCardTitle>Menunggu Persetujuan</CCardTitle>
-              <h3>8</h3>
-            </CCardBody>
-          </CCard>
-        </CCol>
-      </CRow>
+      </CContainer>
     </div>
   )
 }

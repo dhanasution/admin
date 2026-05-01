@@ -1,51 +1,70 @@
 import api from "./api";
-import axios from "axios";
 
+// ================= HELPER =================
 const unwrap = (res) => res?.data?.data || [];
 
-export const getLaporanHarian = async (bulan, tahun, kategori) => {
+
+
+
+// helper biar param tidak null
+const buildParams = (params) => {
+  const cleaned = {};
+  Object.keys(params).forEach((key) => {
+    if (params[key] !== undefined && params[key] !== "" && params[key] !== null) {
+      cleaned[key] = params[key];
+    }
+  });
+  return cleaned;
+};
+
+// ================= HARIAN =================
+
+export const getLaporanHarian = async (bulan, tahun, kategori, opd_id) => {
   const res = await api.get("/laporan-opd/harian", {
-    params: { bulan, tahun, kategori },
+    params: buildParams({ bulan, tahun, kategori, opd_id }),
   });
-  console.log("RESPONSE HARIAN:", res.data);
-  return res.data?.data || [];
+  return unwrap(res);
 };
 
 
-export const getLaporanBulanan = async (bulan, tahun, kategori) => {
+// ================= BULANAN =================
+export const getLaporanBulanan = async (bulan, tahun, kategori, opd_id) => {
   const res = await api.get("/laporan-opd/bulanan", {
-    params: { bulan, tahun, kategori },
+    params: buildParams({ bulan, tahun, kategori, opd_id }),
   });
-
-  return res.data?.data || [];
-  console.log("FULL RESPONSE BULANAN:", res.data);
+  return unwrap(res);
 };
 
+// ================= REKAP PERSEN =================
+export const getLaporanRekapPersen = async (bulan, tahun, opd_id) => {
+  const res = await api.get("/laporan-opd/rekap-persen", {
+    params: buildParams({ bulan, tahun, opd_id }),
+  });
+  return unwrap(res);
+};
+
+// ================= TPP =================
+
+export const getLaporanTPP = async (bulan, tahun, opd_id) => {
+  const res = await api.get("/laporan-opd/rekap-akhir", {
+    params: buildParams({ bulan, tahun, opd_id }),
+  });
+  return unwrap(res);
+};
+
+// ================= PROFILE =================
 export const getProfile = async () => {
   const res = await api.get("/users/profile");
   return res.data?.data || null;
 };
 
-export const getPenandatangan = async () => {
-  const res = await api.get("/users/pegawai-opd");
-  return res.data?.data || [];
-};
+// ================= PENANDATANGAN =================
 
+export const getPenandatangan = async (opd_id) => {
+  if (!opd_id) return []; // 🔥 cegah request kosong
 
-{/* ================= TAMBAHAN PERBAIKAN REKAP PENGURANGAN ================= */}
-export const getLaporanRekapPersen = async (bulan, tahun) => {
-  const res = await api.get("/laporan-opd/rekap-persen", {
-    params: { bulan, tahun },
-  });
-
-
-
-  return res.data?.data || [];
-};
-
-export const getLaporanTPP = async (bulan, tahun) => {
-  const res = await api.get("/laporan-opd/rekap-akhir", {
-    params: { bulan, tahun },
+  const res = await api.get("/laporan/penandatangan", {
+    params: { opd_id },
   });
 
   return res.data?.data || [];

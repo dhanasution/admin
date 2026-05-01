@@ -1,13 +1,19 @@
 import axios from "axios";
 
-// ambil dari env
-const BASE_URL = import.meta.env.VITE_API_URL;
-const TIMEOUT = import.meta.env.VITE_API_TIMEOUT || 10000;
+// ================================
+// 🌐 ENV CONFIG
+// ================================
+const API_URL = import.meta.env.VITE_API_URL;
+const ASSET_URL = import.meta.env.VITE_ASSET_URL;
+
+const TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 10000;
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || "token";
 
-// instance axios
+// ================================
+// 🚀 AXIOS INSTANCE
+// ================================
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_URL,
   timeout: TIMEOUT,
   headers: {
     "Content-Type": "application/json",
@@ -19,10 +25,15 @@ const api = axios.create({
 // ================================
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem(TOKEN_KEY);
+    let token = localStorage.getItem(TOKEN_KEY);
 
+    // handle kalau token pernah di-JSON.stringify
+    try {
+      token = JSON.parse(token);
+    } catch {}
 
-    if (token) {
+    // ⛔ jangan kirim token ke endpoint login
+    if (token && !config.url?.includes("/auth/login")) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
@@ -31,54 +42,69 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+
 // ================================
 // 🚨 RESPONSE INTERCEPTOR
 // ================================
 api.interceptors.response.use(
   (response) => {
-    // langsung return data biar lebih clean di component
+    // ⚠️ JANGAN ubah ke response.data dulu (biar login tidak error)
     return response;
   },
   (error) => {
     const status = error.response?.status;
+    const message =
+      error.response?.data?.message || "Terjadi kesalahan";
 
-    // ============================
-    // 🔐 UNAUTHORIZED
-    // ============================
     if (status === 401) {
-      console.warn("Session expired, silakan login ulang");
+      console.warn("Session expired");
 
       localStorage.removeItem(TOKEN_KEY);
 
-      // hindari redirect loop
       if (window.location.pathname !== "/login") {
         window.location.href = "/login";
       }
     }
 
-    // ============================
-    // 🚫 FORBIDDEN
-    // ============================
     if (status === 403) {
       console.error("Akses ditolak (403)");
     }
 
-    // ============================
-    // 💥 SERVER ERROR
-    // ============================
     if (status >= 500) {
-      console.error("Terjadi kesalahan server");
+      console.error("Server error");
     }
 
-    // ============================
-    // 🌐 NETWORK ERROR
-    // ============================
     if (!error.response) {
       console.error("Tidak dapat terhubung ke server");
     }
 
-    return Promise.reject(error);
+    // kirim error yang lebih clean
+    return Promise.reject({
+      ...error,
+      message,
+    });
   }
 );
+
+// ================================
+// 🖼️ HELPER URL FILE / FOTO
+// ================================
+export const getAssetUrl = (path) => {
+  if (!path) return "";
+
+  return path.startsWith("http")
+    ? path
+    : `${ASSET_URL}/${path}`;
+};
+
+// ================================
+// 📦 EXPORT CONFIG (opsional)
+// ================================
+export const CONFIG = {
+  API_URL,
+  ASSET_URL,
+  TIMEOUT,
+  TOKEN_KEY,
+};
 
 export default api;

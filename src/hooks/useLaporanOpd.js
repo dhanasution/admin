@@ -12,6 +12,9 @@ export const useLaporanOpd = () => {
   const [penandatangan, setPenandatangan] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [selectedOpd, setSelectedOpd] = useState(null);
+
+  // ================= INIT =================
   useEffect(() => {
     const init = async () => {
       setLoading(true);
@@ -20,17 +23,16 @@ export const useLaporanOpd = () => {
         const userData = await getProfile();
         setUser(userData);
 
-        const laporanData = await getLaporanHarian();
-        setLaporan(Array.isArray(laporanData) ? laporanData : []);
+        // ADMIN OPD → AUTO LOAD
+        if (userData?.role === "admin_opd" && userData?.opd_id) {
+          setSelectedOpd(userData.opd_id);
 
-        const pegawaiData = await getPenandatangan();
+          fetchLaporan(userData.opd_id);
+          fetchPenandatangan(userData.opd_id);
+        }
 
-        const pns = pegawaiData.filter(
-          (u) => (u.kategori_pegawai || "").toLowerCase() === "pns"
-        );
-
-        setPenandatangan(pns);
-
+      } catch (err) {
+        console.error("INIT ERROR:", err);
       } finally {
         setLoading(false);
       }
@@ -39,5 +41,62 @@ export const useLaporanOpd = () => {
     init();
   }, []);
 
-  return { user, laporan, penandatangan, loading };
+  // ================= FETCH LAPORAN =================
+  const fetchLaporan = async (opdId, kategori = "pns") => {
+    if (!opdId) return;
+
+    try {
+      setLoading(true);
+
+      const data = await getLaporanHarian(
+        new Date().getMonth() + 1,
+        new Date().getFullYear(),
+        kategori,
+        opdId
+      );
+
+      setLaporan(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("FETCH LAPORAN ERROR:", err);
+      setLaporan([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ================= FETCH PENANDATANGAN =================
+  const fetchPenandatangan = async (opdId) => {
+    if (!opdId) {
+      setPenandatangan([]);
+      return;
+    }
+
+    try {
+      const data = await getPenandatangan(opdId);
+
+      console.log("PENANDATANGAN FINAL:", data);
+
+      setPenandatangan(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("ERROR PENANDATANGAN:", err);
+      setPenandatangan([]);
+    }
+  };
+
+  // ================= HANDLE PILIH OPD =================
+  const handleSelectOpd = (opdId) => {
+    setSelectedOpd(opdId);
+
+    fetchLaporan(opdId);
+    fetchPenandatangan(opdId); // 🔥 WAJIB
+  };
+
+  return {
+    user,
+    laporan,
+    penandatangan,
+    loading,
+    selectedOpd,
+    handleSelectOpd,
+  };
 };

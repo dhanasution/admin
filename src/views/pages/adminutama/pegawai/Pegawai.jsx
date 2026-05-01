@@ -11,6 +11,8 @@ import {
   CBadge,
 } from "@coreui/react";
 
+import TambahPegawaiModal from "./TambahPegawaiModal";
+
 import EditAtasanModal from "./EditAtasanModal";
 
 export default function Pegawai() {
@@ -25,6 +27,26 @@ export default function Pegawai() {
 
   const [selectedPegawai, setSelectedPegawai] = useState(null);
   const [openAtasan, setOpenAtasan] = useState(false);
+
+  const [showTambah, setShowTambah] = useState(false);
+
+
+  const columnWidth = {
+    no: "4%",
+    nama: "18%",
+    nip: "16%",
+    unor: "17%",
+    jabatan: "17%",
+    kategori: "10%",
+    status: "8%",
+    aksi: "10%"
+  };
+
+  const cellStyle = {
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis"
+  };
 
   // ================= LOAD =================
   const loadData = async () => {
@@ -148,7 +170,7 @@ export default function Pegawai() {
                   {/* BUTTON */}
                   <CButton
                     color="primary"
-                    onClick={() => console.log("Tambah Pegawai clicked")}
+                    onClick={() => setShowTambah(true)}
                   >
                     + Tambah Pegawai
                   </CButton>
@@ -159,17 +181,27 @@ export default function Pegawai() {
             </CRow>
 
             {/* TABLE */}
-            <CTable hover bordered responsive align="middle">
+            <CTable
+              hover
+              bordered
+              responsive
+              align="middle"
+              style={{
+                tableLayout: "fixed",
+                width: "100%"
+              }}
+            >
+
               <CTableHead color="light">
                 <CTableRow>
-                  <CTableHeaderCell>No</CTableHeaderCell>
-                  <CTableHeaderCell>Nama</CTableHeaderCell>
-                  <CTableHeaderCell>NIP</CTableHeaderCell>
-                  <CTableHeaderCell>Unit</CTableHeaderCell>
-                  <CTableHeaderCell>Jabatan</CTableHeaderCell>
-                  <CTableHeaderCell>Kategori</CTableHeaderCell>
-                  <CTableHeaderCell>Status</CTableHeaderCell>
-                  <CTableHeaderCell>Aksi</CTableHeaderCell>
+                  <CTableHeaderCell style={{ width: columnWidth.no }}>No</CTableHeaderCell>
+                  <CTableHeaderCell style={{ width: columnWidth.nama }}>Nama</CTableHeaderCell>
+                  <CTableHeaderCell style={{ width: columnWidth.nip }}>NIP</CTableHeaderCell>
+                  <CTableHeaderCell style={{ width: columnWidth.unor }}>Unor</CTableHeaderCell>
+                  <CTableHeaderCell style={{ width: columnWidth.jabatan }}>Jabatan</CTableHeaderCell>
+                  <CTableHeaderCell style={{ width: columnWidth.kategori }}>Kategori</CTableHeaderCell>
+                  <CTableHeaderCell style={{ width: columnWidth.status }}>Status</CTableHeaderCell>
+                  <CTableHeaderCell style={{ width: columnWidth.aksi }}>Aksi</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
 
@@ -293,6 +325,14 @@ export default function Pegawai() {
           />
         )}
 
+        <TambahPegawaiModal
+          visible={showTambah}
+          onClose={() => setShowTambah(false)}
+          onSuccess={() => {
+            setShowTambah(false);
+            loadData(); // reload tabel pegawai
+          }}
+        />
       </CCardBody>
     </CCard>
   );

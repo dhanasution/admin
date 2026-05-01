@@ -32,17 +32,29 @@ export default function Aktivitas() {
 
   const [keyword, setKeyword] = useState("");
 
-const [result, setResult] = useState([]);
+  // 🔥 PAGINATION
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
+
+  // 🔥 SEARCH PEGAWAI
+  const [result, setResult] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
 
-
+  /* ================= FETCH DATA ================= */
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await getAktivitasAdmin();
-      setData(res.data.data);
+      const res = await getAktivitasAdmin({
+        page,
+        limit
+      });
+
+      setData(res.data.data || []);
+      setTotal(res.data.total || 0);
+
     } catch (err) {
-      console.error(err);
+      console.error("FETCH ERROR:", err);
     } finally {
       setLoading(false);
     }
@@ -50,15 +62,23 @@ const [result, setResult] = useState([]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [page]);
 
+  /* ================= DELETE ================= */
   const handleDelete = async (id) => {
     if (!confirm("Hapus data?")) return;
+
     await deleteAktivitas(id);
-    fetchData();
+
+    // 🔥 kalau data habis di page terakhir, mundur 1 page
+    if (data.length === 1 && page > 1) {
+      setPage((p) => p - 1);
+    } else {
+      fetchData();
+    }
   };
 
-
+  /* ================= SEARCH ================= */
   const handleSearch = async () => {
     if (!keyword) return;
 
@@ -67,9 +87,6 @@ const [result, setResult] = useState([]);
 
       const res = await searchPegawai(keyword);
 
-      console.log("RAW API:", res.data); // 🔥 DEBUG
-
-      // 🔥 NORMALISASI DATA
       let data = [];
 
       if (Array.isArray(res.data)) {
@@ -78,36 +95,35 @@ const [result, setResult] = useState([]);
         data = res.data.data;
       } else if (Array.isArray(res.data.data?.data)) {
         data = res.data.data.data;
-      } else {
-        console.warn("FORMAT API TIDAK DIKENAL:", res.data);
       }
-
-      console.log("FINAL RESULT:", data); // 🔥 DEBUG
 
       setResult(data);
 
     } catch (err) {
-      console.error("ERROR SEARCH:", err);
+      console.error("SEARCH ERROR:", err);
       setResult([]);
     } finally {
       setLoadingSearch(false);
     }
   };
+
   const handleReset = () => {
     setKeyword("");
     setResult([]);
   };
 
+  /* ================= TOTAL PAGE ================= */
+  const totalPage = Math.ceil(total / limit) || 1;
+
   return (
     <>
-      {/* CARD 1: SEARCH */}
+      {/* ================= SEARCH CARD ================= */}
       <CCard className="mb-3">
         <CCardHeader>
           <strong>Lock / Unlock Aktivitas Pegawai</strong>
         </CCardHeader>
 
         <CCardBody>
-          {/* SEARCH BAR */}
           <div className="d-flex gap-2">
             <CFormInput
               placeholder="Masukkan NIP atau Nama"
@@ -130,8 +146,8 @@ const [result, setResult] = useState([]);
           {/* RESULT */}
           <div className="mt-4">
             {loadingSearch ? (
-            <CSpinner size="sm" />
-          ) : !result || result.length === 0 ? (
+              <CSpinner size="sm" />
+            ) : result.length === 0 ? (
               <small className="text-muted">
                 Tidak ada data ditemukan
               </small>
@@ -143,19 +159,11 @@ const [result, setResult] = useState([]);
                 >
                   <div>
                     <div><strong>{item.nama}</strong></div>
-
-                    <div className="text-muted">
-                      NIP: {item.nip}
-                    </div>
-
-                    <div className="text-muted">
-                      {item.unor || "-"}
-                    </div>
-
+                    <div className="text-muted">NIP: {item.nip}</div>
+                    <div className="text-muted">{item.unor || "-"}</div>
                     <div className="text-muted small">
                       Jabatan: {item.jabatan || "-"}
                     </div>
-
                     <div className="text-muted small">
                       Atasan: {item.nama_atasan || "-"}
                     </div>
@@ -166,7 +174,6 @@ const [result, setResult] = useState([]);
                       color="success"
                       size="sm"
                       onClick={() => {
-                        console.log("UNLOCK:", item); // DEBUG
                         setSelected(item);
                         setUnlockModal(true);
                       }}
@@ -178,7 +185,6 @@ const [result, setResult] = useState([]);
                       color="danger"
                       size="sm"
                       onClick={() => {
-                        console.log("LOCK:", item); // DEBUG
                         setSelected(item);
                         setLockModal(true);
                       }}
@@ -193,7 +199,7 @@ const [result, setResult] = useState([]);
         </CCardBody>
       </CCard>
 
-      {/* CARD 2: TABLE */}
+      {/* ================= TABLE ================= */}
       <CCard>
         <CCardHeader>
           <strong>Data Aktivitas</strong>
@@ -203,19 +209,50 @@ const [result, setResult] = useState([]);
           {loading ? (
             <CSpinner />
           ) : (
-            <AktivitasTable
-              data={data}
-              onEdit={(row) => {
-                setSelected(row);
-                setModal(true);
-              }}
-              onDelete={handleDelete}
-            />
+            <>
+              <AktivitasTable
+                data={data}
+                onEdit={(row) => {
+                  setSelected(row);
+                  setModal(true);
+                }}
+                onDelete={handleDelete}
+              />
+
+              {/* 🔥 PAGINATION */}
+              <div className="d-flex justify-content-between align-items-center mt-3">
+                <div>
+                  Total: {total}
+                </div>
+
+                <div className="d-flex gap-2 align-items-center">
+                  <CButton
+                    size="sm"
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    Prev
+                  </CButton>
+
+                  <span>
+                    {page} / {totalPage}
+                  </span>
+
+                  <CButton
+                    size="sm"
+                    disabled={page >= totalPage}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Next
+                  </CButton>
+                </div>
+              </div>
+            </>
           )}
         </CCardBody>
       </CCard>
 
-      {/* MODAL */}
+      {/* ================= MODAL ================= */}
       <AktivitasFormModal
         open={modal}
         onClose={() => {
@@ -231,7 +268,6 @@ const [result, setResult] = useState([]);
         onClose={() => setUnlockModal(false)}
         selected={selected}
       />
-
 
       <LockModal
         open={lockModal}

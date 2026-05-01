@@ -3,8 +3,10 @@ import api from "./api";
 
 
 // GET semua aktivitas
-export const getAktivitasAdmin = () => {
-  return api.get("/admin/aktivitas");
+export const getAktivitasAdmin = (params) => {
+  return api.get("/admin/aktivitas", {
+    params 
+  });
 };
 
 // CREATE intervensi

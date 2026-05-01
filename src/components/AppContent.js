@@ -1,4 +1,3 @@
-
 import React, { Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { CContainer, CSpinner } from "@coreui/react";
@@ -9,11 +8,13 @@ import routesAdminUtama from "../routes/routesAdminUtama";
 const AppContent = () => {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const isAdminOpd = user?.role === "admin_opd";
+  let routes = [];
 
-  const routes = isAdminOpd
-    ? routesAdminOpd
-    : routesAdminUtama;
+  if (user?.role === "admin_opd") {
+    routes = routesAdminOpd;
+  } else if (user?.role === "admin_utama") {
+    routes = routesAdminUtama; // sudah include OPD
+  }
 
   return (
     <CContainer className="px-4" lg>
@@ -26,29 +27,19 @@ const AppContent = () => {
       >
         <Routes>
 
-          {/* ROUTES */}
           {routes.map((route, idx) => {
             const Component = route.element;
             return (
               <Route
                 key={idx}
-                path={route.path} // ✅ LANGSUNG PAKAI
+                path={route.path}
                 element={<Component />}
               />
             );
           })}
 
-          {/* DEFAULT KE DASHBOARD */}
-          <Route
-            index
-            element={<Navigate to="dashboard" replace />}
-          />
-
-          {/* FALLBACK */}
-          <Route
-            path="*"
-            element={<Navigate to="dashboard" replace />}
-          />
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="*" element={<Navigate to="dashboard" replace />} />
 
         </Routes>
       </Suspense>

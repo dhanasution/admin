@@ -5,7 +5,7 @@ import {
   cilPeople,
   cilBriefcase,
   cilChartPie,
-  cilClock,
+  cilClipboard,
 } from '@coreui/icons'
 
 import { CNavItem, CNavTitle } from '@coreui/react'
@@ -41,7 +41,7 @@ const navAdminOpd = [
     component: CNavItem,
     name: 'Riwayat Absen',
     to: '/adminopd/riwayat-absensi',
-    icon: <CIcon icon={cilClock} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilClipboard} customClassName="nav-icon" />,
   },
 
 

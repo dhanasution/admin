@@ -15,6 +15,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import { OpdProvider } from "./context/OpdContext";
 
 // Layout
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -55,59 +56,61 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <Suspense
-        fallback={
-          <div className="pt-3 text-center">
-            <CSpinner color="primary" />
-          </div>
-        }
-      >
+      <OpdProvider>
+        <Suspense
+          fallback={
+            <div className="pt-3 text-center">
+              <CSpinner color="primary" />
+            </div>
+          }
+        >
 
-        {/* 🔥 TOAST DI SINI */}
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          pauseOnHover
-          theme="colored"
-        />
-      
-        <Routes>
-
-          {/* 🔐 LOGIN */}
-          <Route path="/login/admin-opd" element={<LoginAdminOPD />} />
-          <Route path="/login/admin-utama" element={<LoginAdminUtama />} />
-
-          {/* redirect default */}
-          <Route path="/login" element={<Navigate to="/login/admin-opd" replace />} />
-
-          {/* 🔐 ADMIN OPD */}
-          <Route
-            path="/adminopd/*"
-            element={
-              <ProtectedRoute allowedRoles={['admin_opd']}>
-                <DefaultLayout />
-              </ProtectedRoute>
-            }
+          {/* 🔥 TOAST DI SINI */}
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            pauseOnHover
+            theme="colored"
           />
+        
+          <Routes>
 
-          {/* 🔐 ADMIN UTAMA */}
-          <Route
-            path="/adminutama/*"
-            element={
-              <ProtectedRoute allowedRoles={['admin_utama']}>
-                <DefaultLayout />
-              </ProtectedRoute>
-            }
-          />
+            {/* 🔐 LOGIN */}
+            <Route path="/login/admin-opd" element={<LoginAdminOPD />} />
+            <Route path="/login/admin-utama" element={<LoginAdminUtama />} />
 
-          {/* 🔀 DEFAULT REDIRECT */}
-          <Route path="/" element={<Navigate to="/login/admin-opd" replace />} />
+            {/* redirect default */}
+            <Route path="/login" element={<Navigate to="/login/admin-opd" replace />} />
 
-        </Routes>
-      </Suspense>
+            {/* 🔐 ADMIN OPD */}
+            <Route
+              path="/adminopd/*"
+              element={
+                <ProtectedRoute allowedRoles={['admin_opd']}>
+                  <DefaultLayout />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 🔐 ADMIN UTAMA */}
+            <Route
+              path="/adminutama/*"
+              element={
+                <ProtectedRoute allowedRoles={['admin_utama']}>
+                  <DefaultLayout />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 🔀 DEFAULT REDIRECT */}
+            <Route path="/" element={<Navigate to="/login/admin-opd" replace />} />
+
+          </Routes>
+        </Suspense>
+      </OpdProvider>
     </BrowserRouter>
   )
 }

@@ -11,6 +11,8 @@ import {
 import getRowsSummary from "./utils/summaryRows";
 import printAbsensi from "./utils/printAbsensi";
 
+import { getAssetUrl } from "src/services/api";
+
 import {
   CCard,
   CCardBody,
@@ -30,7 +32,12 @@ import {
   CBadge,
   CButton,
   CAlert,
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
 } from "@coreui/react";
+
 
 
 const RiwayatAbsensiDetail = () => {
@@ -48,6 +55,14 @@ const RiwayatAbsensiDetail = () => {
   const [error, setError] = useState("");
 
   const printRef = useRef();
+
+  const [showFoto, setShowFoto] = useState(false);
+  const [fotoUrl, setFotoUrl] = useState("");
+
+  const openFoto = (path) => {
+    setFotoUrl(getAssetUrl(path));
+    setShowFoto(true);
+  };
 
   // =========================
   // SUMMARY
@@ -92,9 +107,16 @@ const RiwayatAbsensiDetail = () => {
         api.get(`/rekap/pegawai/profil/${id}`),
       ]);
 
-      setData(detailRes.data || []);
+
+      setData(Array.isArray(detailRes.data) ? detailRes.data : []);
+
+      // object aman
       setSummary(summaryRes.data || {});
-      setProfil(profilRes.data?.data || {});
+
+      // tergantung struktur backend kamu
+      setProfil(profilRes.data?.data || profilRes.data || {});
+
+
     } catch (err) {
       console.error(err);
       setError("Gagal mengambil data");
@@ -282,8 +304,8 @@ const RiwayatAbsensiDetail = () => {
           </CCard>
 
           {/* RINCIAN */}
-          <CCard className="mb-4 shadow-sm">
-            <CCardHeader>
+          <CCard className="mb-4 shadow-sm border-0">
+            <CCardHeader className="bg-light fw-semibold">
               <strong>Rincian Absensi</strong>
             </CCardHeader>
 
@@ -293,10 +315,16 @@ const RiwayatAbsensiDetail = () => {
                   <CSpinner />
                 </div>
               ) : (
-                <CTable striped bordered hover responsive className="mb-0">
+                <CTable
+                  striped
+                  hover
+                  responsive
+                  className="mb-0 align-middle"
+                  style={{ fontSize: "14px" }}
+                >
                   <CTableHead color="light">
                     <CTableRow>
-                      <CTableHeaderCell className="text-center">No</CTableHeaderCell>
+                      <CTableHeaderCell className="text-center" width="60">No</CTableHeaderCell>
                       <CTableHeaderCell className="text-center">Tanggal</CTableHeaderCell>
                       <CTableHeaderCell className="text-center">Masuk</CTableHeaderCell>
                       <CTableHeaderCell className="text-center">Pulang</CTableHeaderCell>
@@ -309,34 +337,104 @@ const RiwayatAbsensiDetail = () => {
                   <CTableBody>
                     {data.length === 0 ? (
                       <CTableRow>
-                        <CTableDataCell
-                          colSpan={7}
-                          className="text-center"
-                        >
+                        <CTableDataCell colSpan={7} className="text-center py-4 text-muted">
                           Tidak ada data
                         </CTableDataCell>
                       </CTableRow>
                     ) : (
                       data.map((item, index) => (
                         <CTableRow key={index}>
-                          <CTableDataCell className="text-center">{index + 1}</CTableDataCell>
-                          <CTableDataCell className="text-center">{item.tanggal}</CTableDataCell>
-                          <CTableDataCell className="text-center">
-                            {item.jam_absen_masuk || "-"}
+                          <CTableDataCell className="text-center fw-semibold">
+                            {index + 1}
                           </CTableDataCell>
+
                           <CTableDataCell className="text-center">
-                            {item.jam_absen_keluar || "-"}
+                            {item.tanggal}
                           </CTableDataCell>
+
+                          {/* MASUK */}
                           <CTableDataCell className="text-center">
-                            {item.terlambat_menit > 0
-                              ? `${item.terlambat_menit} menit`
-                              : "-"}
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "4px 8px",
+                                borderRadius: "6px",
+                                background: item.filepath_masuk ? "#e7f1ff" : "transparent",
+                                color: item.filepath_masuk ? "#0d6efd" : "#6c757d",
+                                fontWeight: 500,
+                                cursor: item.filepath_masuk ? "pointer" : "default",
+                                transition: "0.2s",
+                              }}
+                              onClick={() => openFoto(item.filepath_masuk)}
+                              onMouseOver={(e) => {
+                                if (item.filepath_masuk) {
+                                  e.target.style.background = "#d0e2ff";
+                                }
+                              }}
+                              onMouseOut={(e) => {
+                                if (item.filepath_masuk) {
+                                  e.target.style.background = "#e7f1ff";
+                                }
+                              }}
+                              title={item.filepath_masuk ? "Klik untuk lihat foto" : ""}
+                            >
+                              {item.jam_absen_masuk || "-"}
+                            </span>
                           </CTableDataCell>
+
+                          {/* KELUAR */}
                           <CTableDataCell className="text-center">
-                            {item.cepat_pulang_menit > 0
-                              ? `${item.cepat_pulang_menit} menit`
-                              : "-"}
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "4px 8px",
+                                borderRadius: "6px",
+                                background: item.filepath_keluar ? "#e7f1ff" : "transparent",
+                                color: item.filepath_keluar ? "#0d6efd" : "#6c757d",
+                                fontWeight: 500,
+                                cursor: item.filepath_keluar ? "pointer" : "default",
+                                transition: "0.2s",
+                              }}
+                              onClick={() => openFoto(item.filepath_keluar)}
+                              onMouseOver={(e) => {
+                                if (item.filepath_keluar) {
+                                  e.target.style.background = "#d0e2ff";
+                                }
+                              }}
+                              onMouseOut={(e) => {
+                                if (item.filepath_keluar) {
+                                  e.target.style.background = "#e7f1ff";
+                                }
+                              }}
+                              title={item.filepath_keluar ? "Klik untuk lihat foto" : ""}
+                            >
+                              {item.jam_absen_keluar || "-"}
+                            </span>
                           </CTableDataCell>
+
+                          {/* TERLAMBAT */}
+                          <CTableDataCell className="text-center">
+                            {item.terlambat_menit > 0 ? (
+                              <span className="text-danger fw-semibold">
+                                {item.terlambat_menit} menit
+                              </span>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </CTableDataCell>
+
+                          {/* CEPAT PULANG */}
+                          <CTableDataCell className="text-center">
+                            {item.cepat_pulang_menit > 0 ? (
+                              <span className="text-warning fw-semibold">
+                                {item.cepat_pulang_menit} menit
+                              </span>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </CTableDataCell>
+
+                          {/* STATUS */}
                           <CTableDataCell className="text-center">
                             {badgeStatus(item.keterangan)}
                           </CTableDataCell>
@@ -395,6 +493,33 @@ const RiwayatAbsensiDetail = () => {
             </CCardBody>
           </CCard>
         </div>
+        <CModal
+        visible={showFoto}
+        onClose={() => setShowFoto(false)}
+        size="lg"
+        alignment="center"
+      >
+        <CModalHeader>
+          <CModalTitle>Foto Absensi</CModalTitle>
+        </CModalHeader>
+
+        <CModalBody className="text-center">
+          {fotoUrl ? (
+            <img
+              src={fotoUrl}
+              alt="Foto Absensi"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "75vh",
+                borderRadius: "12px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              }}
+            />
+          ) : (
+            <div className="text-muted">Tidak ada foto</div>
+          )}
+        </CModalBody>
+      </CModal>
       </CCardBody>
     </CCard>
   );

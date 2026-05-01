@@ -195,9 +195,6 @@ export default function Users() {
                   </CButton>
 
 
-                  
-
-
                 </div>
               </CCol>
 
